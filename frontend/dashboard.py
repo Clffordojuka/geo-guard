@@ -1,4 +1,10 @@
 # frontend/dashboard.py
+import sys
+import os
+
+# Add the parent directory (root folder) to the Python Path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import streamlit as st
 from streamlit_folium import st_folium
 from components.map_view import render_map
