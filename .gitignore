@@ -1,0 +1,19 @@
+# .gitignore
+
+# 1. Security (NEVER push these)
+.env
+.env.local
+
+# 2. Python & Virtual Environment
+.venv/
+__pycache__/
+*.pyc
+
+# 3. Database & System
+*.sqlite3
+*.log
+.DS_Store
+
+# 4. Editor settings
+.vscode/
+.idea/
