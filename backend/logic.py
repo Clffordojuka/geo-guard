@@ -12,15 +12,21 @@ BASE_URL = "https://api.openweathermap.org/data/2.5/weather"
 
 # Representative coordinates for the 30 disaster zones
 LOCATIONS = [
-    # --- Nairobi & Central ---
+    {"city": "Mombasa", "lat": -4.04, "lon": 39.66},
     {"city": "Nairobi (Mathare)", "lat": -1.26, "lon": 36.86},
     {"city": "Nairobi (South C)", "lat": -1.32, "lon": 36.83},
-    # --- Lake Region ---
+    {"city": "Kiambu (Githurai)", "lat": -1.15, "lon": 36.90},
+    {"city": "Thika", "lat": -1.03, "lon": 37.08},
+    {"city": "Murang'a", "lat": -0.72, "lon": 37.15},
+    {"city": "Nyeri", "lat": -0.42, "lon": 36.95},
+    {"city": "Kirinyaga (Kutus)", "lat": -0.52, "lon": 37.28},
+    {"city": "Embu", "lat": -0.53, "lon": 37.45},
+    {"city": "Meru (Maua)", "lat": 0.05, "lon": 37.65},
     {"city": "Kisumu (Dunga)", "lat": -0.11, "lon": 34.74},
     {"city": "Homa Bay", "lat": -0.50, "lon": 34.45},
     {"city": "Migori", "lat": -1.00, "lon": 34.50},
     {"city": "Kisii", "lat": -0.70, "lon": 34.80},
-    # --- Rift Valley (Floods/Landslides) ---
+    {"city": "Nyamira", "lat": -0.60, "lon": 34.95},
     {"city": "Nakuru (Mai Mahiu)", "lat": -1.00, "lon": 36.60},
     {"city": "West Pokot (Weiwei)", "lat": 1.25, "lon": 35.10},
     {"city": "Elgeyo (Chesongoch)", "lat": 1.13, "lon": 35.64},
@@ -29,12 +35,11 @@ LOCATIONS = [
     {"city": "Narok", "lat": -1.10, "lon": 36.00},
     {"city": "Kericho", "lat": -0.30, "lon": 35.40},
     {"city": "Bomet", "lat": -0.80, "lon": 35.30},
-    # --- Coastal & Tana ---
+    {"city": "Siaya", "lat": -0.06, "lon": 34.28},
     {"city": "Tana River (Hola)", "lat": -1.50, "lon": 40.05},
     {"city": "Kilifi (Ganze)", "lat": -3.40, "lon": 39.80},
     {"city": "Kwale", "lat": -4.20, "lon": 39.50},
     {"city": "Taita Taveta", "lat": -3.40, "lon": 38.50},
-    # --- ASAL / Drought Belt ---
     {"city": "Mandera (East)", "lat": 3.93, "lon": 41.86},
     {"city": "Wajir (South)", "lat": 1.00, "lon": 40.00},
     {"city": "Garissa (Shimbirey)", "lat": -0.45, "lon": 39.65},
