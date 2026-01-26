@@ -138,5 +138,3 @@ The system uses "Multi-Hazard Detection" logic:
 3. **Push:** `git push origin main`
 
 *Built for the International Energy and Sustainability Summit (IESS) Hackathon 2026.*
-
-```
