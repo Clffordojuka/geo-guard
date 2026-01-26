@@ -1,5 +1,3 @@
-# backend/models.py
-# (Keep imports the same)
 from sqlalchemy import Column, Integer, String, Float, DateTime
 from sqlalchemy.sql import func
 from geoalchemy2 import Geometry

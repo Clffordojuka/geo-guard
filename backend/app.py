@@ -1,4 +1,3 @@
-# backend/app.py
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from apscheduler.schedulers.background import BackgroundScheduler

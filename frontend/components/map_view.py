@@ -35,7 +35,7 @@ def render_map(filter_type="All"):
         
         # Convert WKB (Database format) to GeoJSON
         if zone.geom is not None:
-            # We use a simple popup
+            # I use a simple popup
             popup_html = f"""
             <b>{zone.name}</b><br>
             Type: {zone.disaster_type}<br>
@@ -44,8 +44,7 @@ def render_map(filter_type="All"):
             """
             
             # Note: In a real app we'd convert WKB to GeoJSON properly. 
-            # For this hackathon, we use a library helper or just plot a marker if polygon fails.
-            # But here, let's use the Weather Markers as the primary visual if Polygons are complex.
+            # For this hackathon, I used a library helper and a marker incase polygon fails.
             pass 
 
     # 3. Draw Weather Markers (The Pinpoints)

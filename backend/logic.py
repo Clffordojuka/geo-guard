@@ -10,7 +10,7 @@ load_dotenv()
 API_KEY = os.getenv("OPENWEATHER_API_KEY")
 BASE_URL = "https://api.openweathermap.org/data/2.5/weather"
 
-# Representative coordinates for the 30 disaster zones
+# Representative coordinates for the 38 disaster zones
 LOCATIONS = [
     {"city": "Mombasa", "lat": -4.04, "lon": 39.66},
     {"city": "Nairobi (Mathare)", "lat": -1.26, "lon": 36.86},
