@@ -140,16 +140,3 @@ The system uses "Multi-Hazard Detection" logic:
 *Built for the International Energy and Sustainability Summit (IESS) Hackathon 2026.*
 
 ```
-
-***
-
-### **What Next? (Final Check)**
-Your project is now fully documented. Your teammate can clone this repo, run 4 commands, and see the exact same dashboard you see.
-
-* **Check:** Have you pushed this new README to GitHub?
-* **Practice:** Try reading the "The Problem" section out loud. That is the opening line of your pitch!
-
-[How to Write a Great README](https://www.youtube.com/watch?v=E68xqg7198g)
-This video is relevant because it provides a visual guide on structuring a README to ensure clarity and professionalism, reinforcing the template provided above.
-
-```
