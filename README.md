@@ -1,6 +1,6 @@
 # 🌍 GeoGuard Kenya: National Climate Monitor
 
-**GeoGuard** is a hyperlocal early-warning system that creates a "Digital Twin" of Kenya's climate risks. It combines real-time satellite weather data with static risk profiles to predict and visualize climate disasters (Floods, Droughts, Landslides) across 47 counties.
+**GeoGuard** is a hybrid early-warning system that creates a "Digital Twin" of Kenya's climate risks. It bridges the gap between modern science and traditional wisdom by combining real-time satellite data with **Indigenous Knowledge (IK)** to predict and visualize climate disasters (Floods, Droughts, Landslides) across 47 counties.
 
 ![Streamlit Badge](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=Streamlit&logoColor=white)
 ![FastAPI Badge](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
@@ -10,12 +10,13 @@
 ---
 
 ## 🚀 The Problem
-National weather forecasts are too broad. Telling a farmer "Heavy Rain in Nakuru" is insufficient; they need to know **"Flash Flood risk in Mai Mahiu Gully in 30 minutes."**
+National weather forecasts are too broad and often disconnected from local realities.
+1.  **The Scientific Gap:** Telling a farmer "Heavy Rain in Nakuru" is insufficient; they need to know **"Flash Flood risk in Mai Mahiu Gully in 30 minutes."**
+2.  **The Cultural Gap:** Satellite data often ignores the ground-level biological signs (bio-indicators) that indigenous communities have relied on for centuries.
 
 **GeoGuard bridges this gap by:**
-1.  Mapping **38 Critical Risk Zones** (informal settlements, steep slopes, arid lands).
-2.  Monitoring them **24/7** using automated satellite data fetchers.
-3.  Applying specific **Hazard Logic** (e.g., Drought = Heat > 32°C + Dry Soil).
+* **Scientific Monitoring:** Mapping **38 Critical Risk Zones** and monitoring them 24/7 via satellite.
+* **Cultural Integration:** Validating **Indigenous Knowledge** (e.g., behavior of Safari Ants or Baobab flowering) against real-time sensor data.
 
 ---
 
@@ -26,7 +27,22 @@ National weather forecasts are too broad. Telling a farmer "Heavy Rain in Nakuru
 | **The Brain** | **FastAPI** + **APScheduler** | Automates data fetching every 60 mins. |
 | **The Memory** | **PostgreSQL** + **PostGIS** | Stores complex risk polygons (Spatial Data). |
 | **The Face** | **Streamlit** + **Folium** | Live interactive dashboard for visualization. |
+| **The Bridge** | **IP Geolocation** + **Requests** | Detects user location to validate local signs. |
 | **Manager** | **uv** + **Docker** | Dependency management and database containerization. |
+
+---
+
+## 🌿 Asili Smart (New Feature)
+**"Connecting Tradition with Technology"**
+
+Asili Smart is a dedicated module within GeoGuard that allows communities to report indigenous bio-indicators. The system then "validates" these observations using hard scientific data.
+
+### How It Works:
+1.  **Observation:** A user selects a sign (e.g., *"Frogs croaking loudly"*).
+2.  **Geolocation:** The system uses **Smart GPS/IP Detection** to pinpoint the user's location (e.g., Nairobi, Turkana).
+3.  **Validation:** The engine cross-references the sign with live satellite sensors:
+    * *If Signs Match Sensors:* **"✅ VALIDATED"** (High Confidence Alert).
+    * *If Signs Conflict:* **"⚠️ CAUTION"** (Discrepancy Detected).
 
 ---
 
@@ -37,7 +53,7 @@ Follow these steps to get the system running on your local machine.
 ### 1. Prerequisites
 * **Docker Desktop** (Must be running for the database).
 * **uv** (An extremely fast Python package manager).
-  * *Install uv:* `pip install uv` (or `curl -LsSf https://astral.sh/uv/install.sh | sh`)
+    * *Install uv:* `pip install uv` (or `curl -LsSf https://astral.sh/uv/install.sh | sh`)
 
 ### 2. Clone & Install
 ```bash
@@ -73,7 +89,7 @@ OPENWEATHER_API_KEY=your_openweather_api_key_here
 
 ### 5. Seed the Data
 
-Populate the database with the 30+ risk zones (Mathare, Mandera, West Pokot, etc.):
+Populate the database with the 30+ risk zones and Asili Smart logic:
 
 ```bash
 uv run python -m scripts.seed_db
@@ -106,11 +122,11 @@ uv run streamlit run frontend/dashboard.py
 
 ---
 
-## 🎮 Simulation Mode (Hackathon Demo)
+## 🎮 Command Center & Simulation
 
 Since disasters don't happen on schedule, we built a **Simulation Engine** for the judges.
 
-1. Open the Dashboard sidebar.
+1. Open the Dashboard sidebar and scroll to **"🎮 Command Center"**.
 2. Check the box **`🚨 SIMULATE DISASTER`**.
 3. **What happens:**
 * The system injects fake "heavy rain" data (65mm/hr) into **Mathare** and **Mai Mahiu**.
@@ -121,13 +137,26 @@ Since disasters don't happen on schedule, we built a **Simulation Engine** for t
 
 ---
 
-## 🌍 Monitored Logic
+## 🌍 Hybrid Hazard Logic
 
-The system uses "Multi-Hazard Detection" logic:
+The system uses a "Multi-Source" decision engine:
 
-* **🌊 Flood Risk:** Triggered if Rainfall > **50mm/hr** in Urban/Riverine zones.
-* **🍂 Drought Risk:** Triggered if Temp > **32°C** AND Rainfall < **1mm** in ASAL counties (Mandera, Wajir, etc.).
-* **⛰️ Landslide Risk:** Triggered if Rainfall > **30mm/hr** in Steep Slope zones (West Pokot, Murang'a).
+### 1. Scientific Thresholds
+
+* **🌊 Flood Risk:** Rainfall > **50mm/hr** in Urban/Riverine zones.
+* **🍂 Drought Risk:** Temp > **32°C** AND Rainfall < **1mm** in ASAL counties.
+* **⛰️ Landslide Risk:** Rainfall > **30mm/hr** in Steep Slope zones.
+
+### 2. Indigenous Validation Logic
+
+* **Sign:** *Safari Ants moving in lines* (Indicates Rain).
+* *Validation:* Checks if Barometric Pressure is dropping + Humidity > 60%.
+
+
+* **Sign:** *Goat Intestines "Clear"* (Indicates Drought).
+* *Validation:* Checks if Soil Moisture < 10% + Temp > 30°C.
+
+
 
 ---
 
