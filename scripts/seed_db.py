@@ -1,9 +1,20 @@
 # scripts/seed_db.py
+import sys
+import os
+
+# Add parent directory to path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from sqlalchemy.orm import Session
 from backend.database import SessionLocal, engine
 from backend.models import RiskZone, Base
 
 def seed_data():
+    print("🛠️  Initializing Database Tables...")
+    # --- SAFETY CHECK: Creates tables if they don't exist (Crucial for Cloud) ---
+    Base.metadata.create_all(bind=engine)
+    print("✅ Tables Verified.")
+
     db = SessionLocal()
     
     # --- 1. FLOOD ZONES ---
@@ -76,25 +87,30 @@ def seed_data():
     print(f"🌱 Seeding {len(all_zones)} National Disaster Zones...")
     
     count = 0
-    for zone in all_zones:
-        # Check if exists to avoid duplicates
-        exists = db.query(RiskZone).filter(RiskZone.name == zone["name"]).first()
-        if not exists:
-            new_zone = RiskZone(
-                name=zone["name"],
-                county=zone["county"],
-                risk_level=zone["risk"],
-                disaster_type=zone["type"],
-                description=zone["desc"],
-                geom=zone["geom"]
-            )
-            db.add(new_zone)
-            count += 1
-            print(f" -> Added {zone['name']} ({zone['county']})")
-    
-    db.commit()
-    print(f"✅ Success! Added {count} new zones to the National Registry.")
-    db.close()
+    try:
+        for zone in all_zones:
+            # Check if exists to avoid duplicates
+            exists = db.query(RiskZone).filter(RiskZone.name == zone["name"]).first()
+            if not exists:
+                new_zone = RiskZone(
+                    name=zone["name"],
+                    county=zone["county"],
+                    risk_level=zone["risk"],
+                    disaster_type=zone["type"],
+                    description=zone["desc"],
+                    geom=zone["geom"]
+                )
+                db.add(new_zone)
+                count += 1
+                print(f" -> Added {zone['name']} ({zone['county']})")
+        
+        db.commit()
+        print(f"✅ Success! Added {count} new zones to the National Registry.")
+    except Exception as e:
+        print(f"❌ Error during seeding: {e}")
+        db.rollback()
+    finally:
+        db.close()
 
 if __name__ == "__main__":
     seed_data()
