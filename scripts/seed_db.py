@@ -6,18 +6,27 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from sqlalchemy.orm import Session
+from sqlalchemy import text # Import text to run raw SQL
 from backend.database import SessionLocal, engine
 from backend.models import RiskZone, Base
 
 def seed_data():
     print("🛠️  Initializing Database Tables...")
-    # --- SAFETY CHECK: Creates tables if they don't exist (Crucial for Cloud) ---
+
+    # --- 1. CRITICAL FIX: ENABLE POSTGIS EXTENSION ---
+    # We connect directly to the engine to run the enabling command
+    with engine.connect() as connection:
+        connection.execute(text("CREATE EXTENSION IF NOT EXISTS postgis;"))
+        connection.commit()
+    print("✅ PostGIS Extension Enabled.")
+
+    # --- 2. Create Tables (Now that PostGIS is active) ---
     Base.metadata.create_all(bind=engine)
     print("✅ Tables Verified.")
 
     db = SessionLocal()
     
-    # --- 1. FLOOD ZONES ---
+    # --- 3. FLOOD ZONES ---
     flood_zones = [
         {"name": "Mathare Settlements", "county": "Nairobi", "risk": "Critical", "type": "Urban Flood", "desc": "Severely flooded informal settlement.", 
          "geom": "POLYGON((36.85 -1.25, 36.87 -1.25, 36.87 -1.27, 36.85 -1.27, 36.85 -1.25))"},
@@ -41,7 +50,7 @@ def seed_data():
          "geom": "POLYGON((39.60 -0.40, 39.75 -0.40, 39.75 -0.55, 39.60 -0.55, 39.60 -0.40))"},
     ]
 
-    # --- 2. LANDSLIDE ZONES ---
+    # --- 4. LANDSLIDE ZONES ---
     landslide_zones = [
         {"name": "Chesongoch", "county": "Elgeyo Marakwet", "risk": "Critical", "type": "Landslide", "desc": "Major tragedy site: 41 deaths recorded.", 
          "geom": "POLYGON((35.60 1.10, 35.68 1.10, 35.68 1.16, 35.60 1.16, 35.60 1.10))"},
@@ -55,7 +64,7 @@ def seed_data():
          "geom": "POLYGON((35.80 -1.00, 36.10 -1.00, 36.10 -1.20, 35.80 -1.20, 35.80 -1.00))"},
     ]
 
-    # --- 3. DROUGHT ZONES ---
+    # --- 5. DROUGHT ZONES ---
     drought_zones = [
         {"name": "Mandera East", "county": "Mandera", "risk": "Critical", "type": "Drought", "desc": "IPC Phase 3: Severe food insecurity.", 
          "geom": "POLYGON((41.00 3.50, 41.95 3.50, 41.95 4.00, 41.00 4.00, 41.00 3.50))"},
