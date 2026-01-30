@@ -23,4 +23,5 @@ COPY . .
 EXPOSE 8501
 
 # Command to run the app
-CMD ["streamlit", "run", "frontend/dashboard.py", "--server.port=8501", "--server.address=0.0.0.0"]
+# Run the seed script FIRST, then start the app
+CMD bash -c "python -m scripts.seed_db && streamlit run frontend/dashboard.py --server.port=8501 --server.address=0.0.0.0"
