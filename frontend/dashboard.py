@@ -4,6 +4,9 @@ import os
 import datetime
 import time
 import requests
+import pandas as pd
+import joblib  
+import plotly.graph_objects as go
 
 # Add parent directory to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -22,7 +25,7 @@ st.set_page_config(page_title="GeoGuard Kenya", layout="wide", page_icon="🌍")
 SIGN_PLACEHOLDER = "Select the sign..."
 LOCATION_PLACEHOLDER = "Select area to observe..."
 
-# --- DATA FETCHING ---
+# --- 1. DATA FETCHING (Database) ---
 def get_data():
     db = SessionLocal()
     zones = db.query(RiskZone).all()
@@ -34,283 +37,290 @@ zones, weather_logs = get_data()
 location_names = sorted([log.city for log in weather_logs])
 current_time = datetime.datetime.now().strftime("%m/%d/%Y, %I:%M:%S %p")
 
+# --- 2. ML MODEL LOADING (The New Feature) ---
+@st.cache_resource
+def load_seasonal_model():
+    """Loads the trained Random Forest model from backend."""
+    # Robust path finding
+    model_path = os.path.join(os.path.dirname(__file__), "..", "backend", "seasonal_model.pkl")
+    model_path = os.path.abspath(model_path)
+    try:
+        return joblib.load(model_path)
+    except FileNotFoundError:
+        return None
+
+def predict_future_season(model, days_ahead=90):
+    """Predicts rainfall using the ML model."""
+    start_date = datetime.datetime.now()
+    dates = [start_date + datetime.timedelta(days=i) for i in range(days_ahead)]
+    
+    # Prepare Input (Day of Year)
+    future_df = pd.DataFrame({"date": dates})
+    future_df["day_of_year"] = future_df["date"].dt.dayofyear
+    
+    # Predict
+    predictions = model.predict(future_df[["day_of_year"]])
+    future_df["predicted_rain"] = predictions
+    return future_df
+
 # --- INITIALIZE SESSION STATE ---
 if 'validation_result' not in st.session_state:
     st.session_state.validation_result = None
-
-# We use 'location_selector' as the MASTER key for the dropdown.
-# We initialize it to the placeholder if it doesn't exist.
 if 'location_selector' not in st.session_state:
     st.session_state.location_selector = LOCATION_PLACEHOLDER
 
 # =========================================================
-# 1. INDIGENOUS KNOWLEDGE DATABASE
+# 3. GLOBAL NAVIGATION (The New Structure)
 # =========================================================
-ik_signs = [
-    {"id": "ants", "name": "Safari Ants (Siafu) moving in lines", "meaning": "Rain is coming soon", "type": "Rain"},
-    {"id": "frogs", "name": "Frogs croaking loudly at night", "meaning": "Immediate rain (24hrs)", "type": "Rain"},
-    {"id": "halo", "name": "Halo (ring) around the moon", "meaning": "Rain likely in 3 days", "type": "Rain"},
-    {"id": "baobab", "name": "Baobab (Mbuyu) Tree flowering", "meaning": "Long rains starting soon", "type": "Rain"},
-    {"id": "wind_s", "name": "Strong Wind South -> North", "meaning": "Rain is near", "type": "Rain"},
-    {"id": "goat_intestine", "name": "Goat Intestines: 'Clear' reading", "meaning": "Prolonged Drought", "type": "Drought"},
-    {"id": "morning_mist", "name": "Thick Morning Mist (Fog)", "meaning": "Cold, dry day ahead", "type": "Cold"},
-    {"id": "dragonfly", "name": "Swarm of Dragonflies", "meaning": "Rainy season is ending", "type": "Dry"},
-    {"id": "magungu", "name": "Magungu Bird flying high", "meaning": "Heavy rain approaching", "type": "Rain"}
-]
-
-# Create list with placeholder at the top
-sign_options = [SIGN_PLACEHOLDER] + [sign["name"] for sign in ik_signs]
-location_options = [LOCATION_PLACEHOLDER] + location_names
+st.sidebar.title("🌍 GeoGuard Nav")
+app_mode = st.sidebar.selectbox("Choose Mode:", [
+    "📡 Live Monitor", 
+    "🌿 Asili Smart", 
+    "🔮 Seasonal Predictions" # <-- NEW TAB
+])
+st.sidebar.markdown("---")
 
 # =========================================================
-# 2. SIDEBAR SECTION A: ASILI SMART
+# MODE A: SEASONAL PREDICTIONS (Machine Learning)
 # =========================================================
-st.sidebar.title("🌿 Asili Smart Forecast")
-st.sidebar.markdown("Select a sign and your location to receive a validated forecast.")
+if app_mode == "🔮 Seasonal Predictions":
+    st.title("🔮 AI Seasonal Forecast Engine")
+    st.markdown("Predictive analytics using a **Random Forest Regressor** trained on historical Kenyan weather data.")
 
-# A. Select Sign (With Placeholder)
-selected_sign_name = st.sidebar.selectbox(
-    "1. What did you observe today?",
-    sign_options
-)
-
-# B. Location Selection (With ROBUST GPS)
-st.sidebar.markdown("**2. Select your Location:**")
-
-col_gps, col_txt = st.sidebar.columns([1, 4])
-gps_clicked = col_gps.button("📍", help="Use My Device Location")
-
-# --- FIXED GPS LOGIC ---
-if gps_clicked:
-    target_city = None
-    with st.sidebar:
-        # 1. Spinner Logic
-        with st.spinner("Connecting to GPS Satellites..."):
-            time.sleep(1.5) # Simulate connection time
-            
-            # 2. Try Real IP Geolocation
-            try:
-                response = requests.get('https://ipinfo.io/json', timeout=3)
-                data = response.json()
-                detected_city = data.get('city', 'Unknown')
-                
-                # 3. Match Logic
-                # Try to find the detected city in our DB (e.g., "Nairobi" -> "Nairobi (Mathare)")
-                match = next((loc for loc in location_names if detected_city in loc), None)
-                
-                if match:
-                    target_city = match
-                else:
-                    # If city detected but not in our DB, default to Nairobi safely
-                    target_city = next((loc for loc in location_names if "Nairobi" in loc), None)
-            
-            except:
-                # 4. Fallback (Simulating "Prompt to turn on GPS")
-                # If internet/GPS fails, we don't show an error. We simulate a successful "Retry".
-                target_city = next((loc for loc in location_names if "Nairobi" in loc), None)
+    col1, col2 = st.columns([1, 3])
     
-    # 5. FORCE UPDATE THE WIDGET (The Critical Fix)
-    if target_city:
-        # We update the KEY of the widget directly. This forces the dropdown to change.
-        st.session_state.location_selector = target_city
-        st.sidebar.success(f"📍 Connected: {target_city}")
-        time.sleep(1)
-        st.rerun() # Restart so the dropdown visibly updates
+    with col1:
+        st.info("**Model Architecture**")
+        st.markdown("""
+        - **Algorithm:** Random Forest
+        - **Accuracy (R²):** 67%
+        - **Target:** Rainfall (mm)
+        """)
+        
+        days = st.slider("Forecast Horizon (Days)", 30, 180, 90)
+        
+        # Load Model
+        model = load_seasonal_model()
+        
+        if st.button("🚀 Run Prediction"):
+            if model:
+                st.session_state.forecast = predict_future_season(model, days)
+                st.success("Prediction Complete")
+            else:
+                st.error("⚠️ Model not found! Ensure 'backend/seasonal_model.pkl' exists.")
 
-# Dropdown (Bound to Session State Key)
-selected_location = st.sidebar.selectbox(
-    "Choose Area:",
-    location_options,
-    key="location_selector" # This key binds it to the logic above
-)
+    with col2:
+        if 'forecast' in st.session_state:
+            data = st.session_state.forecast
+            
+            # Interactive Plotly Graph
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(
+                x=data['date'], 
+                y=data['predicted_rain'], 
+                mode='lines', 
+                name='Predicted Rainfall',
+                line=dict(color='#00CC96', width=3),
+                fill='tozeroy'
+            ))
+            
+            # Smart Insight Logic
+            peak_rain = data['predicted_rain'].max()
+            avg_rain = data['predicted_rain'].mean()
+            season_status = "Long Rains Approaching" if peak_rain > 12 else "Dry Season / Short Rains"
+            
+            fig.update_layout(
+                title=f"Forecast Trend: {season_status}",
+                yaxis_title="Rainfall (mm)",
+                template="plotly_dark",
+                height=500
+            )
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Recommendation Box
+            if avg_rain > 5:
+                st.success("✅ **Recommendation:** Conditions favorable for planting. Recommended crops: Maize, Beans.")
+            else:
+                st.warning("⚠️ **Recommendation:** Rainfall below average. Focus on drought-resistant crops (Sorghum, Cassava).")
 
-# C. Validation Button
-if st.sidebar.button("✅ Validate Sign"):
-    # 1. Check if user left placeholders selected
-    if selected_sign_name == SIGN_PLACEHOLDER:
-        st.sidebar.error("Please select an observation first.")
-    elif selected_location == LOCATION_PLACEHOLDER:
-        st.sidebar.error("Please select a location first.")
+# =========================================================
+# MODE B: ASILI SMART (Indigenous Knowledge)
+# =========================================================
+elif app_mode == "🌿 Asili Smart":
+    # 1. INDIGENOUS KNOWLEDGE DATABASE
+    ik_signs = [
+        {"id": "ants", "name": "Safari Ants (Siafu) moving in lines", "meaning": "Rain is coming soon", "type": "Rain"},
+        {"id": "frogs", "name": "Frogs croaking loudly at night", "meaning": "Immediate rain (24hrs)", "type": "Rain"},
+        {"id": "halo", "name": "Halo (ring) around the moon", "meaning": "Rain likely in 3 days", "type": "Rain"},
+        {"id": "baobab", "name": "Baobab (Mbuyu) Tree flowering", "meaning": "Long rains starting soon", "type": "Rain"},
+        {"id": "wind_s", "name": "Strong Wind South -> North", "meaning": "Rain is near", "type": "Rain"},
+        {"id": "goat_intestine", "name": "Goat Intestines: 'Clear' reading", "meaning": "Prolonged Drought", "type": "Drought"},
+        {"id": "morning_mist", "name": "Thick Morning Mist (Fog)", "meaning": "Cold, dry day ahead", "type": "Cold"},
+        {"id": "dragonfly", "name": "Swarm of Dragonflies", "meaning": "Rainy season is ending", "type": "Dry"},
+        {"id": "magungu", "name": "Magungu Bird flying high", "meaning": "Heavy rain approaching", "type": "Rain"}
+    ]
+
+    sign_options = [SIGN_PLACEHOLDER] + [sign["name"] for sign in ik_signs]
+    location_options = [LOCATION_PLACEHOLDER] + location_names
+
+    st.sidebar.title("🌿 Asili Smart Inputs")
+    st.sidebar.markdown("Select a sign and your location.")
+
+    # A. Select Sign
+    selected_sign_name = st.sidebar.selectbox("1. What did you observe?", sign_options)
+
+    # B. GPS Logic (Keep existing robust logic)
+    col_gps, col_txt = st.sidebar.columns([1, 4])
+    gps_clicked = col_gps.button("📍", help="Use My Device Location")
+
+    if gps_clicked:
+        target_city = None
+        with st.sidebar:
+            with st.spinner("Connecting to GPS Satellites..."):
+                time.sleep(1.5)
+                try:
+                    response = requests.get('https://ipinfo.io/json', timeout=3)
+                    data = response.json()
+                    detected_city = data.get('city', 'Unknown')
+                    match = next((loc for loc in location_names if detected_city in loc), None)
+                    target_city = match if match else next((loc for loc in location_names if "Nairobi" in loc), None)
+                except:
+                    target_city = next((loc for loc in location_names if "Nairobi" in loc), None)
+        
+        if target_city:
+            st.session_state.location_selector = target_city
+            st.sidebar.success(f"📍 Connected: {target_city}")
+            time.sleep(1)
+            st.rerun()
+
+    selected_location = st.sidebar.selectbox("Choose Area:", location_options, key="location_selector")
+
+    if st.sidebar.button("✅ Validate Sign"):
+        if selected_sign_name == SIGN_PLACEHOLDER:
+            st.sidebar.error("Please select an observation first.")
+        elif selected_location == LOCATION_PLACEHOLDER:
+            st.sidebar.error("Please select a location first.")
+        else:
+            real_sign = next(s for s in ik_signs if s["name"] == selected_sign_name)
+            st.session_state.validation_result = {"sign": real_sign, "location": selected_location, "timestamp": current_time}
+
+    # MAIN AREA RENDER FOR ASILI
+    st.title("🌿 Asili Smart Forecast")
+    
+    if st.session_state.validation_result:
+        res = st.session_state.validation_result
+        loc = res['location']
+        sign = res['sign']
+        city_data = next((log for log in weather_logs if log.city == loc), None)
+        
+        if city_data:
+            # Validation Logic
+            is_raining = city_data.rainfall_1h > 0.5
+            is_hot = city_data.temperature > 30.0
+            
+            status, header_color, msg = "Neutral", "#2196F3", ""
+            
+            if sign['type'] == "Rain":
+                if is_raining:
+                    status, header_color = "VALIDATED", "#4CAF50"
+                    msg = f"✅ Asili Smart confirms your observation. Satellites also detect rainfall ({city_data.rainfall_1h}mm)."
+                else:
+                    status, header_color = "CAUTION", "#FFC107"
+                    msg = f"⚠️ Asili Smart reports clear skies. Satellites show 0mm rain."
+            elif sign['type'] == "Drought":
+                if is_hot and city_data.rainfall_1h == 0:
+                    status, header_color = "VALIDATED", "#F44336"
+                    msg = f"✅ CRITICAL VALIDATION: Extreme heat ({city_data.temperature}°C) confirmed."
+                else:
+                    status, header_color = "Caution", "#FFC107"
+                    msg = "⚠️ Conditions are milder than observed."
+            else:
+                 msg = f"ℹ️ Observation recorded: {sign['name']}."
+
+            with st.container():
+                st.markdown(f"""
+                <div style="border-left: 5px solid {header_color}; border-radius: 5px; padding: 15px; background-color: #262730; margin-bottom: 20px;">
+                    <h3 style="color: {header_color}; margin:0;">{status}</h3>
+                    <p style="color: white;">{msg}</p>
+                </div>""", unsafe_allow_html=True)
+                
+                c1, c2, c3 = st.columns(3)
+                c1.metric("Temp", f"{city_data.temperature}°C")
+                c2.metric("Humidity", f"{city_data.humidity}%")
+                c3.metric("Rain", f"{city_data.rainfall_1h}mm")
+                
+                if st.button("❌ Close Report"):
+                    st.session_state.validation_result = None
+                    st.rerun()
     else:
-        # Proceed with Validation
-        real_sign = next(s for s in ik_signs if s["name"] == selected_sign_name)
-        st.session_state.validation_result = {
-            "sign": real_sign,
-            "location": selected_location,
-            "timestamp": current_time
-        }
-
-st.sidebar.markdown("---")
+        st.info("👈 Please select a sign and location from the sidebar to begin validation.")
 
 # =========================================================
-# 3. SIDEBAR SECTION B: COMMAND CENTER
+# MODE C: LIVE MONITOR (Map & Alerts)
 # =========================================================
-st.sidebar.title("🎮 Command Center")
-disaster_filter = st.sidebar.radio(
-    "Filter View:",
-    ["All", "Urban Flood", "Riverine Flood", "Landslide", "Drought"]
-)
-st.sidebar.markdown("---")
-simulate_disaster = st.sidebar.checkbox("🚨 SIMULATE DISASTER")
-
-if simulate_disaster:
-    st.sidebar.error("Simulation Active: Injecting Fake Risk Data")
-
-# =========================================================
-# 4. ALERT LOGIC (Hidden Backend Work)
-# =========================================================
-active_alerts = []
-critical_count = 0
-ASAL_COUNTIES = ["Mandera", "Wajir", "Turkana", "Marsabit", "Garissa", "Isiolo", "Samburu"]
-
-for zone in zones:
-    if zone.risk_level == "Critical":
-        critical_count += 1
-        if simulate_disaster and "Mathare" in zone.name:
-            active_alerts.append(f"URGENT: Flash Flood detected in {zone.name} (Rainfall > 50mm/h)")
-
-for log in weather_logs:
-    rain = log.rainfall_1h
-    temp = log.temperature
-    city_name = log.city
+else:
+    # Sidebar Filters
+    st.sidebar.title("🎮 Command Center")
+    disaster_filter = st.sidebar.radio("Filter View:", ["All", "Urban Flood", "Riverine Flood", "Landslide", "Drought"])
+    simulate_disaster = st.sidebar.checkbox("🚨 SIMULATE DISASTER")
 
     if simulate_disaster:
-        if "Mathare" in city_name or "Mai Mahiu" in city_name:
-            rain = 65.0 
-    
-    if rain > 50:
-        msg = f"CRITICAL WEATHER: Heavy Rainfall ({rain}mm) in {city_name}"
-        if msg not in active_alerts:
-            active_alerts.append(msg)
+        st.sidebar.error("Simulation Active")
 
-    is_asal = any(asal in city_name for asal in ASAL_COUNTIES)
-    if is_asal: 
-        if temp > 32.0 and rain < 1.0:
-            msg = f"DROUGHT ALERT: Extreme Heat ({temp}°C) & Dry Conditions in {city_name}"
-            if msg not in active_alerts:
-                active_alerts.append(msg)
+    # Alert Logic
+    active_alerts = []
+    critical_count = 0
+    ASAL_COUNTIES = ["Mandera", "Wajir", "Turkana", "Marsabit", "Garissa", "Isiolo", "Samburu"]
 
-# =========================================================
-# 5. MAIN DASHBOARD RENDER
-# =========================================================
-st.title("🌍 GeoGuard Kenya: National Climate Monitor")
+    for zone in zones:
+        if zone.risk_level == "Critical":
+            critical_count += 1
+            if simulate_disaster and "Mathare" in zone.name:
+                active_alerts.append(f"URGENT: Flash Flood detected in {zone.name}")
 
-# A. SHOW ASILI REPORT CARD (PERSISTENT & ACCESSIBLE)
-if st.session_state.validation_result:
-    res = st.session_state.validation_result
-    loc = res['location']
-    sign = res['sign']
-    
-    city_data = next((log for log in weather_logs if log.city == loc), None)
-    
-    if city_data:
-        # Validation Logic
-        is_raining_scientifically = city_data.rainfall_1h > 0.5
-        is_hot = city_data.temperature > 30.0
+    for log in weather_logs:
+        rain = log.rainfall_1h
+        if simulate_disaster and ("Mathare" in log.city or "Mai Mahiu" in log.city): rain = 65.0 
         
-        status = "Neutral"
-        header_color = "#2196F3" # Material Blue
-        match_message = ""
+        if rain > 50:
+            active_alerts.append(f"CRITICAL WEATHER: Heavy Rainfall ({rain}mm) in {log.city}")
+
+        if any(c in log.city for c in ASAL_COUNTIES) and log.temperature > 32.0 and rain < 1.0:
+            active_alerts.append(f"DROUGHT ALERT: Extreme Heat ({log.temperature}°C) in {log.city}")
+
+    # Main Render
+    st.title("🌍 GeoGuard Kenya: National Climate Monitor")
+    show_alert_banner(active_alerts)
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Monitored Zones", len(zones))
+    col2.metric("High Risk Areas", critical_count)
+    col3.metric("Live Sensors", len(weather_logs))
+
+    m = folium.Map(location=[0.0236, 37.9062], zoom_start=6, tiles="CartoDB dark_matter")
+
+    for zone in zones:
+        if disaster_filter != "All" and disaster_filter not in zone.disaster_type: continue
+        color = "red" if zone.risk_level == "Critical" else "orange"
+        if zone.geom:
+            folium.Marker(
+                location=[0, 0], # Note: Real coords would come from Geom parsing
+                popup=f"{zone.name}: {zone.risk_level}",
+                icon=folium.Icon(color=color, icon="info-sign")
+            ).add_to(m)
+
+    for log in weather_logs:
+        rain = log.rainfall_1h
+        if simulate_disaster and ("Mathare" in log.city or "Mai Mahiu" in log.city): rain = 65.0
+        icon_color = "red" if rain > 50 else "blue" if rain > 5 else "green"
         
-        if sign['type'] == "Rain":
-            if is_raining_scientifically:
-                status = "VALIDATED"
-                header_color = "#4CAF50" # Material Green
-                match_message = f"✅ Asili Smart confirms your observation. Satellites also detect rainfall ({city_data.rainfall_1h}mm) in {loc}."
-            else:
-                status = "CAUTION"
-                header_color = "#FFC107" # Material Amber (High Vis)
-                match_message = f"⚠️ Asili Smart reports clear skies. The {sign['name']} doesn't seem to match immediate satellite readings (0mm rain)."
-                
-        elif sign['type'] == "Drought":
-            if is_hot and city_data.rainfall_1h == 0:
-                status = "VALIDATED"
-                header_color = "#F44336" # Material Red
-                match_message = f"✅ CRITICAL VALIDATION: Your observation matches our sensors. Extreme heat ({city_data.temperature}°C) and dry soil detected."
-            else:
-                status = "Caution"
-                header_color = "#FFC107"
-                match_message = "⚠️ Conditions are milder than your observation suggests."
-        
-        else:
-             match_message = f"ℹ️ Asili Smart has recorded your observation of {sign['name']}."
-
-        # VISIBILITY FIX: White Text on Dark Card
-        with st.container():
-            st.markdown(f"""
-            <div style="
-                border-left: 5px solid {header_color}; 
-                border-radius: 5px; 
-                padding: 15px; 
-                background-color: #262730; 
-                margin-bottom: 20px;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            ">
-                <h3 style="color: {header_color}; margin-top: 0; font-weight: 800; letter-spacing: 1px;">{status}</h3>
-                <p style="font-size: 16px; color: #FFFFFF; line-height: 1.5;">{match_message}</p>
-            </div>
-            """, unsafe_allow_html=True)
-            
-            st.markdown(f"### ⛅ Current Conditions in {loc}")
-            c1, c2, c3, c4 = st.columns(4)
-            c1.metric("Temp", f"{city_data.temperature}°C")
-            c2.metric("Humidity", f"{city_data.humidity}%")
-            c3.metric("Pressure", "1012 hPa")
-            c4.metric("Wind", "6.5 m/s")
-            
-            # Outlook Section
-            st.info(f"**📅 Monthly Outlook:** It is currently hot and dry in {loc}. Farmers should focus on land preparation. Shalom!")
-            st.caption(f"Observation recorded on {res['timestamp']}.")
-            
-            if st.button("❌ Close Report"):
-                st.session_state.validation_result = None
-                st.rerun()
-            
-            st.markdown("---")
-
-# B. SHOW ALERTS
-show_alert_banner(active_alerts)
-
-# C. SHOW METRICS & MAP
-col1, col2, col3 = st.columns(3)
-col1.metric("Monitored Zones", len(zones), "Across 47 Counties")
-col2.metric("High Risk Areas", critical_count, "Based on Historical Data")
-col3.metric("Live Sensors Online", len(weather_logs), "Real-Time Updates")
-
-m = folium.Map(location=[0.0236, 37.9062], zoom_start=6, tiles="CartoDB dark_matter")
-
-for zone in zones:
-    if disaster_filter != "All" and disaster_filter not in zone.disaster_type:
-        continue
-    
-    color = "orange"
-    if zone.risk_level == "Critical": color = "red"
-    if "Drought" in zone.disaster_type: color = "brown"
-    
-    if zone.geom:
         folium.Marker(
-            location=[0, 0], 
-            popup=f"{zone.name}: {zone.risk_level}",
-            icon=folium.Icon(color=color, icon="info-sign")
+            [log.lat, log.lon],
+            popup=f"<b>{log.city}</b><br>Rain: {rain}mm",
+            icon=folium.Icon(color=icon_color, icon="cloud")
         ).add_to(m)
 
-for log in weather_logs:
-    rain = log.rainfall_1h
-    if simulate_disaster and ("Mathare" in log.city or "Mai Mahiu" in log.city):
-        rain = 65.0
-    
-    icon_color = "green"
-    if rain > 5: icon_color = "blue"
-    if rain > 50: icon_color = "red" 
-    
-    folium.Marker(
-        [log.lat, log.lon],
-        popup=f"<b>{log.city}</b><br>Rain: {rain}mm",
-        tooltip=f"{log.city}: {rain}mm",
-        icon=folium.Icon(color=icon_color, icon="cloud")
-    ).add_to(m)
+    st_folium(m, width="100%", height=600)
 
-st_folium(m, width="100%", height=600)
-
-if st.button("🔄 Refresh Data"):
-    st.rerun()
+    if st.button("🔄 Refresh Data"):
+        st.rerun()
