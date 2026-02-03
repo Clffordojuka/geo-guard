@@ -17,7 +17,6 @@ import folium
 from backend.database import SessionLocal
 from backend.models import RiskZone, WeatherLog
 from components.alerts import show_alert_banner
-# Import fetcher for manual sync on Render
 from backend.weather_service import fetch_live_weather 
 
 # Page Config
