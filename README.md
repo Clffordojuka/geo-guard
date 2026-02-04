@@ -1,12 +1,13 @@
 # 🌍 GeoGuard Kenya: National Climate Monitor
 
-**GeoGuard** is a hybrid early-warning system that creates a "Digital Twin" of Kenya's climate risks. It bridges the gap between modern science and traditional wisdom by combining real-time satellite data, **Machine Learning**, and **Indigenous Knowledge (IK)** to predict and visualize climate disasters (Floods, Droughts, Landslides) across 47 counties.
+**GeoGuard** is a hybrid early-warning system that creates a "Digital Twin" of Kenya's climate risks. It bridges the gap between modern science, traditional wisdom, and the digital divide by combining satellite data, **Machine Learning**, **Indigenous Knowledge (IK)**, and **USSD** to predict and visualize climate disasters (Floods, Droughts, Landslides) across 47 counties.
 
 ![Streamlit Badge](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=Streamlit&logoColor=white)
 ![FastAPI Badge](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
 ![PostGIS Badge](https://img.shields.io/badge/PostGIS-336791?style=for-the-badge&logo=postgresql&logoColor=white)
 ![Python Badge](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python&logoColor=white)
 ![Scikit-Learn Badge](https://img.shields.io/badge/scikit--learn-%23F7931E.svg?style=for-the-badge&logo=scikit-learn&logoColor=white)
+![AfricasTalking Badge](https://img.shields.io/badge/Africa's%20Talking-USSD-orange?style=for-the-badge)
 
 ---
 
@@ -14,12 +15,13 @@
 National weather forecasts are too broad and often disconnected from local realities.
 1.  **The Scientific Gap:** Telling a farmer "Heavy Rain in Nakuru" is insufficient; they need to know **"Flash Flood risk in Mai Mahiu Gully in 30 minutes."**
 2.  **The Cultural Gap:** Satellite data often ignores the ground-level biological signs (bio-indicators) that indigenous communities have relied on for centuries.
-3.  **The Planning Gap:** Farmers need to know *when* the Long Rains will start, not just today's weather.
+3.  **The Digital Gap:** 70% of farmers use feature phones (kabambe) and cannot access complex web dashboards.
 
 **GeoGuard bridges this gap by:**
 * **Real-Time Monitoring:** Tracking **26 Critical Risk Zones** 24/7 via OpenWeatherMap API.
 * **Cultural Integration:** Validating **Indigenous Knowledge** (e.g., behavior of Safari Ants) against sensor data.
 * **Predictive AI:** Using Machine Learning to forecast seasonal rainfall patterns 90 days out.
+* **Inclusivity:** Providing a **USSD Interface** so anyone can report signs or get warnings without internet.
 
 ---
 
@@ -27,10 +29,11 @@ National weather forecasts are too broad and often disconnected from local reali
 
 | Component | Technology | Function |
 | :--- | :--- | :--- |
-| **The Brain** | **FastAPI** + **APScheduler** | Automates data fetching every 60 mins. |
+| **The Brain** | **FastAPI** + **APScheduler** | Automates data fetching and handles API logic. |
 | **The Oracle** | **Scikit-Learn** + **Random Forest** | ML Model predicting seasonal rainfall onset. |
+| **The Reach** | **Africa's Talking** + **Ngrok** | USSD interface for offline feature phone users. |
 | **The Memory** | **PostgreSQL** + **PostGIS** | Stores complex risk polygons (Spatial Data). |
-| **The Face** | **Streamlit** + **Folium** + **Plotly** | Live interactive dashboard for visualization. |
+| **The Face** | **Streamlit** + **Folium** | Live interactive dashboard for visualization. |
 | **The Bridge** | **OpenWeatherMap API** | Feeds live sensor data to the digital twin. |
 | **Manager** | **uv** + **Docker** | Dependency management and database containerization. |
 
@@ -46,15 +49,26 @@ We moved beyond just *monitoring* disasters to *predicting* them.
 
 ---
 
-## 🌿 Asili Smart
+## 🌿 Asili Smart (Web & USSD)
 **"Connecting Tradition with Technology"**
 
 Asili Smart is a dedicated module that validates indigenous bio-indicators.
-1.  **Observation:** A user reports a sign (e.g., *"Frogs croaking loudly"*).
-2.  **Geolocation:** The system detects the user's location (e.g., Mathare).
+1.  **Observation:** A user reports a sign (e.g., *"Frogs croaking loudly"* or *"Goat Intestines Clear"*).
+2.  **Geolocation:** The system detects location via GPS (Web) or Menu Selection (USSD).
 3.  **Validation:** The engine cross-references the sign with live satellite sensors:
     * *If Signs Match Sensors:* **"✅ VALIDATED"** (High Confidence Alert).
     * *If Signs Conflict:* **"⚠️ CAUTION"** (Discrepancy Detected).
+
+---
+
+## 📞 USSD "Last Mile" Interface
+**"No Smartphone? No Problem."**
+
+We integrated **Africa's Talking API** to bring GeoGuard to feature phones.
+* **How it works:** Farmers dial a code (e.g., `*384*...`) to access the system.
+* **Features:**
+    1.  **Report Signs:** Submit Asili Smart observations (Ants, Intestines, etc.).
+    2.  **Get Warnings:** Receive text-based alerts for their specific Climate Zone (Urban, Lake, Rift, North, Coast).
 
 ---
 
@@ -65,6 +79,7 @@ Follow these steps to get the system running on your local machine.
 ### 1. Prerequisites
 * **Docker Desktop** (Must be running for the database).
 * **uv** (An extremely fast Python package manager).
+* **Ngrok** (For USSD tunneling).
 
 ### 2. Clone & Install
 ```bash
@@ -72,7 +87,7 @@ Follow these steps to get the system running on your local machine.
 git clone [https://github.com/Clffordojuka/geo-guard.git](https://github.com/Clffordojuka/geo-guard.git)
 cd geo-guard
 
-# Install dependencies
+# Install dependencies (includes FastAPI, Streamlit, Scikit-Learn)
 uv sync
 
 ```
@@ -112,6 +127,17 @@ uv run python -m scripts.train_model
 
 ```
 
+### 6. Run USSD Tunnel (Optional)
+
+If testing the USSD feature locally:
+
+```bash
+# Expose your local API to the internet
+ngrok http 8000
+# Copy the forwarding URL ([https://xyz.ngrok-free.app](https://xyz.ngrok-free.app)) to Africa's Talking Sandbox
+
+```
+
 ---
 
 ## 🖥️ How to Run the App
@@ -119,7 +145,7 @@ uv run python -m scripts.train_model
 Open **two separate terminals** to run the full stack:
 
 **Terminal 1: The Backend (Brain)**
-*Starts the API and the automated weather scheduler.*
+*Starts the API, USSD Listener, and automated weather scheduler.*
 
 ```bash
 uv run uvicorn backend.app:app --reload
@@ -156,6 +182,7 @@ The system uses a "Multi-Source" decision engine:
 
 * **🌊 Flood Risk:** Rainfall > **50mm/hr** in Urban/Riverine zones.
 * **🍂 Drought Risk:** Temp > **32°C** AND Rainfall < **1mm** in ASAL counties.
+* **⛰️ Landslide Risk:** Rainfall > **30mm/hr** in Steep Slope zones.
 
 ### 2. Indigenous Validation Logic
 
