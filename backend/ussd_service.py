@@ -11,8 +11,9 @@ def handle_ussd_session(text: str, db: Session):
     response = ""
 
     # --- SCREEN 0: MAIN MENU ---
+    # MUST start with CON
     if text == "":
-        response = "Clifford Jambo! Welcome to GeoGuard.\n"
+        response = "CON Jambo Clifford! Welcome to GeoGuard.\n"
         response += "1. Report Asili Sign (Citizen)\n"
         response += "2. Get Warning (Forecast)"
 
@@ -22,14 +23,14 @@ def handle_ussd_session(text: str, db: Session):
     elif inputs[0] == "1":
         # Screen 1.1: Select Sign
         if len(inputs) == 1:
-            response = "Clifford What did you see?\n"
+            response = "CON What did you see, Clifford?\n"
             response += "1. Safari Ants/Frogs (Rain)\n"
             response += "2. Dusty Wind/Intestines (Drought)\n"
             response += "3. Earth Cracks/Birds (Landslide)"
         
         # Screen 1.2: Select Region
         elif len(inputs) == 2:
-            response = "Clifford Select Region:\n"
+            response = "CON Select Region:\n"
             response += "1. Nairobi (Mathare)\n"
             response += "2. Lake (Kisumu)\n"
             response += "3. Rift/Central (Murang'a)\n"
@@ -51,7 +52,8 @@ def handle_ussd_session(text: str, db: Session):
             chosen_sign = sign_map.get(inputs[1], "Unknown Sign")
             chosen_loc = loc_map.get(inputs[2], "Unknown Location")
             
-            # Logic: Fake Validation Message to simulate the "Digital Twin" check
+            # Logic: Fake Validation Message
+            # MUST start with END
             response = f"END Report Received: {chosen_sign} in {chosen_loc}.\n"
             response += "Status: Satellite Cross-Check Initiated.\n"
             response += "You will receive an SMS if risk is confirmed."
@@ -62,7 +64,7 @@ def handle_ussd_session(text: str, db: Session):
     elif inputs[0] == "2":
         # Screen 2.1: Select Key Risk Zones
         if len(inputs) == 1:
-            response = "Clifford Select Zone to Monitor:\n"
+            response = "CON Select Zone to Monitor:\n"
             response += "1. Nairobi (Mathare) - Flood\n"
             response += "2. Kisumu Central - Lake\n"
             response += "3. Murang'a East - Landslide\n"
@@ -71,7 +73,7 @@ def handle_ussd_session(text: str, db: Session):
 
         # Screen 2.2: Fetch Live DB Data
         elif len(inputs) == 2:
-            # MAP THESE ID NUMBERS TO EXACT NAMES IN YOUR DATABASE (seed_db.py)
+            # MAP THESE ID NUMBERS TO EXACT NAMES IN YOUR DATABASE
             loc_map = {
                 "1": "Mathare Settlements", 
                 "2": "Kisumu Central", 
@@ -88,10 +90,8 @@ def handle_ussd_session(text: str, db: Session):
                 if log:
                     # 2. Smart Status Logic
                     status = "Normal"
-                    # Flood Logic
                     if log.rainfall_1h > 50: status = "🚨 CRITICAL FLOOD"
                     elif log.rainfall_1h > 10: status = "⚠️ Heavy Rain"
-                    # Drought Logic
                     elif log.temperature > 32 and log.rainfall_1h < 1: status = "☀️ High Heat/Drought"
                     
                     time_str = log.timestamp.strftime("%H:%M")
