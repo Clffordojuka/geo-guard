@@ -7,6 +7,7 @@ from .database import engine, Base, SessionLocal
 # Uses the weather service (26 zones)
 from .weather_service import fetch_live_weather 
 from .ussd_service import handle_ussd_session 
+from .whatsapp_service import handle_whatsapp_message
 
 # Create Tables
 Base.metadata.create_all(bind=engine)
@@ -40,7 +41,7 @@ app = FastAPI(title="GeoGuard Kenya", lifespan=lifespan)
 def home():
     return {"status": "GeoGuard National Monitor Online", "mode": "Automated"}
 
-# --- NEW USSD ENDPOINT (Africa's Talking) ---
+# --- USSD ENDPOINT (Africa's Talking) ---
 @app.post("/ussd")
 async def ussd_callback(
     text: str = Form(default=""),
@@ -56,8 +57,28 @@ async def ussd_callback(
         # Pass the text input to our logic engine
         response_text = handle_ussd_session(text, db)
         
-        # <--- 2. THE FIX: Return raw text, NOT JSON
+        # Return raw text (CON/END), NOT JSON
         return Response(content=response_text, media_type="text/plain")
         
     finally:
         db.close()
+
+# --- NEW WHATSAPP ENDPOINT (Twilio) ---
+@app.post("/whatsapp")
+async def whatsapp_reply(request: Request):
+    """
+    Receives messages from Twilio (WhatsApp).
+    Handles both Text (Menu) and Media (Images).
+    """
+    # Parse Twilio's Form Data
+    form_data = await request.form()
+    
+    body = form_data.get("Body", "")       # The text message
+    media_url = form_data.get("MediaUrl0") # The image (if any)
+    sender = form_data.get("From")         # The phone number
+    
+    # Process logic via the service
+    response_xml = handle_whatsapp_message(body, media_url, sender)
+    
+    # Return XML (Twilio language)
+    return Response(content=response_xml, media_type="application/xml")
