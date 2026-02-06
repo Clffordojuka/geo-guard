@@ -1,6 +1,6 @@
 # 🌍 GeoGuard Kenya: National Climate Monitor
 
-**GeoGuard** is a hybrid early-warning system that creates a "Digital Twin" of Kenya's climate risks. It bridges the gap between modern science, traditional wisdom, and the digital divide by combining satellite data, **Machine Learning**, **Indigenous Knowledge (IK)**, and **USSD** to predict and visualize climate disasters (Floods, Droughts, Landslides) across 47 counties.
+**GeoGuard** is a hybrid early-warning system that creates a "Digital Twin" of Kenya's climate risks. It bridges the gap between modern science, traditional wisdom, and the digital divide by combining satellite data, **Machine Learning**, **Indigenous Knowledge (IK)**, **USSD**, and **AI Vision** to predict and visualize climate disasters (Floods, Droughts, Landslides) across 47 counties.
 
 ![Streamlit Badge](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=Streamlit&logoColor=white)
 ![FastAPI Badge](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
@@ -8,6 +8,17 @@
 ![Python Badge](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python&logoColor=white)
 ![Scikit-Learn Badge](https://img.shields.io/badge/scikit--learn-%23F7931E.svg?style=for-the-badge&logo=scikit-learn&logoColor=white)
 ![AfricasTalking Badge](https://img.shields.io/badge/Africa's%20Talking-USSD-orange?style=for-the-badge)
+![Twilio Badge](https://img.shields.io/badge/Twilio-WhatsApp-red?style=for-the-badge&logo=twilio)
+![Gemini Badge](https://img.shields.io/badge/Google%20Gemini-AI%20Vision-8E75B2?style=for-the-badge&logo=google)
+
+---
+
+## 📸 System Previews
+
+**1. The Live Dashboard**
+*Real-time monitoring of 26 Risk Zones using OpenWeatherMap & PostGIS.*
+![Dashboard Main View](screenshots/dashboard_main.png)
+![Dashboard Risk Map](screenshots/dashboard_map.png)
 
 ---
 
@@ -15,13 +26,13 @@
 National weather forecasts are too broad and often disconnected from local realities.
 1.  **The Scientific Gap:** Telling a farmer "Heavy Rain in Nakuru" is insufficient; they need to know **"Flash Flood risk in Mai Mahiu Gully in 30 minutes."**
 2.  **The Cultural Gap:** Satellite data often ignores the ground-level biological signs (bio-indicators) that indigenous communities have relied on for centuries.
-3.  **The Digital Gap:** 70% of farmers use feature phones (kabambe) and cannot access complex web dashboards.
+3.  **The Digital Gap:** Many farmers cannot access complex web dashboards but use WhatsApp or Feature Phones daily.
 
 **GeoGuard bridges this gap by:**
 * **Real-Time Monitoring:** Tracking **26 Critical Risk Zones** 24/7 via OpenWeatherMap API.
 * **Cultural Integration:** Validating **Indigenous Knowledge** (e.g., behavior of Safari Ants) against sensor data.
-* **Predictive AI:** Using Machine Learning to forecast seasonal rainfall patterns 90 days out.
-* **Inclusivity:** Providing a **USSD Interface** so anyone can report signs or get warnings without internet.
+* **AI Vision:** Allowing citizens to snap photos of disasters for instant analysis via **Google Gemini**.
+* **Inclusivity:** Providing a **USSD Interface** for offline users and a **WhatsApp Bot** for smartphone users.
 
 ---
 
@@ -30,12 +41,26 @@ National weather forecasts are too broad and often disconnected from local reali
 | Component | Technology | Function |
 | :--- | :--- | :--- |
 | **The Brain** | **FastAPI** + **APScheduler** | Automates data fetching and handles API logic. |
+| **The Vision** | **Google Gemini 2.0 Flash** | AI Model that analyzes photos for disaster risks. |
 | **The Oracle** | **Scikit-Learn** + **Random Forest** | ML Model predicting seasonal rainfall onset. |
+| **The Messenger** | **Twilio (WhatsApp)** | Chatbot interface for submitting photos/reports. |
 | **The Reach** | **Africa's Talking** + **Ngrok** | USSD interface for offline feature phone users. |
 | **The Memory** | **PostgreSQL** + **PostGIS** | Stores complex risk polygons (Spatial Data). |
 | **The Face** | **Streamlit** + **Folium** | Live interactive dashboard for visualization. |
-| **The Bridge** | **OpenWeatherMap API** | Feeds live sensor data to the digital twin. |
 | **Manager** | **uv** + **Docker** | Dependency management and database containerization. |
+
+---
+
+## 🤖 GeoGuard AI Bot (WhatsApp)
+**"AI Vision for Everyone"**
+
+We turned every smartphone into a remote sensor.
+* **Visual Analysis:** A user sends a photo of a rising river or cracked wall.
+* **The AI:** Google Gemini (Flash 2.0) analyzes the image for risks (Flood, Drought, Landslide).
+* **The Response:** The bot replies with a risk assessment and immediate safety advice.
+
+![WhatsApp Bot Demo](screenshots/whatsapp_bot.png)
+![WhatsApp Bot Demo](screenshots/whatsapp_bot_alert.png)
 
 ---
 
@@ -49,12 +74,12 @@ We moved beyond just *monitoring* disasters to *predicting* them.
 
 ---
 
-## 🌿 Asili Smart (Web & USSD)
+## 🌿 Asili Smart (Web, USSD & WhatsApp)
 **"Connecting Tradition with Technology"**
 
 Asili Smart is a dedicated module that validates indigenous bio-indicators.
 1.  **Observation:** A user reports a sign (e.g., *"Frogs croaking loudly"* or *"Goat Intestines Clear"*).
-2.  **Geolocation:** The system detects location via GPS (Web) or Menu Selection (USSD).
+2.  **Geolocation:** The system detects location via Menu Selection (USSD) or NLP (WhatsApp).
 3.  **Validation:** The engine cross-references the sign with live satellite sensors:
     * *If Signs Match Sensors:* **"✅ VALIDATED"** (High Confidence Alert).
     * *If Signs Conflict:* **"⚠️ CAUTION"** (Discrepancy Detected).
@@ -68,7 +93,12 @@ We integrated **Africa's Talking API** to bring GeoGuard to feature phones.
 * **How it works:** Farmers dial a code (e.g., `*384*...`) to access the system.
 * **Features:**
     1.  **Report Signs:** Submit Asili Smart observations (Ants, Intestines, etc.).
-    2.  **Get Warnings:** Receive text-based alerts for their specific Climate Zone (Urban, Lake, Rift, North, Coast).
+    2.  **Get Warnings:** Drill-down menu to check status for specific zones (e.g., *North -> Turkana -> Kibish*).
+
+**USSD Interaction Flow:**
+![USSD Main Menu](screenshots/ussd_menu.png)
+![USSD Region Selection](screenshots/ussd_regions.png)
+![USSD Alert Message](screenshots/ussd_alert.png)
 
 ---
 
@@ -79,7 +109,7 @@ Follow these steps to get the system running on your local machine.
 ### 1. Prerequisites
 * **Docker Desktop** (Must be running for the database).
 * **uv** (An extremely fast Python package manager).
-* **Ngrok** (For USSD tunneling).
+* **Ngrok** (For USSD/WhatsApp tunneling).
 
 ### 2. Clone & Install
 ```bash
@@ -87,7 +117,7 @@ Follow these steps to get the system running on your local machine.
 git clone [https://github.com/Clffordojuka/geo-guard.git](https://github.com/Clffordojuka/geo-guard.git)
 cd geo-guard
 
-# Install dependencies (includes FastAPI, Streamlit, Scikit-Learn)
+# Install dependencies (FastAPI, Streamlit, Scikit-Learn, Twilio, Google GenAI)
 uv sync
 
 ```
@@ -104,12 +134,17 @@ docker run --name geoguard-db -e POSTGRES_PASSWORD=hackathon -p 5432:5432 -d pos
 
 ### 4. Configuration
 
-Create a `.env` file in the root folder:
+Create a `.env` file in the root folder with your keys:
 
 ```env
-# .env
+# Database
 DATABASE_URL=postgresql://postgres:hackathon@localhost:5432/geoguard
-OPENWEATHER_API_KEY=your_openweather_api_key_here
+
+# APIs
+OPENWEATHER_API_KEY=your_openweather_key
+GEMINI_API_KEY=your_google_ai_studio_key
+TWILIO_ACCOUNT_SID=your_twilio_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
 
 ```
 
@@ -127,14 +162,14 @@ uv run python -m scripts.train_model
 
 ```
 
-### 6. Run USSD Tunnel (Optional)
+### 6. Run Tunnels (Optional)
 
-If testing the USSD feature locally:
+If testing USSD or WhatsApp locally:
 
 ```bash
 # Expose your local API to the internet
 ngrok http 8000
-# Copy the forwarding URL ([https://xyz.ngrok-free.app](https://xyz.ngrok-free.app)) to Africa's Talking Sandbox
+# Copy the URL to Africa's Talking (USSD) or Twilio Console (WhatsApp)
 
 ```
 
@@ -145,7 +180,7 @@ ngrok http 8000
 Open **two separate terminals** to run the full stack:
 
 **Terminal 1: The Backend (Brain)**
-*Starts the API, USSD Listener, and automated weather scheduler.*
+*Starts the API, USSD/WhatsApp Listeners, and automated weather scheduler.*
 
 ```bash
 uv run uvicorn backend.app:app --reload
@@ -161,16 +196,6 @@ uv run uvicorn backend.app:app --reload
 uv run streamlit run frontend/dashboard.py
 
 ```
-
----
-
-## ☁️ Deployment Note (Render)
-
-If deploying to Render.com (Free Tier):
-
-1. Add `OPENWEATHER_API_KEY` to the **Environment Variables**.
-2. The background scheduler may sleep on the free tier.
-3. Use the **"🔄 Sync Live Weather"** button on the dashboard to manually trigger a data refresh.
 
 ---
 
